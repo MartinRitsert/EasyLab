@@ -10,20 +10,26 @@ class ExperimentApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        # Initialize hash and experiment type labels
+        # Initialize hash label, line edit, and button
         self.hash_label = QLabel("Hash:")
+        self.hash_line_edit = QLineEdit()
+        self.hash_button = QPushButton("Generate Hash")
+
+        # Initialize experiment type label
         self.experiment_type_label = QLabel("Experiment Type:")
 
         # Initialize time counters
+        self.elapsed_time_label = QLabel("Elapsed Time")
         self.elapsed_time_counter = QTimeEdit(QTime(0, 0))
+        self.next_action_label = QLabel("Next Action in")
         self.next_action_counter = QTimeEdit(QTime(0, 0))
 
-        # Initialize table labels and text boxes
+        # Initialize table labels and line edits
         self.usage_label = QLabel("Inhaler Usage")
         self.col1_label = QLabel("Time [minutes]")
         self.col2_label = QLabel("Clock time [hh:mm:ss]")
-        self.col1_text_boxes = [QLineEdit() for _ in range(6)]
-        self.col2_text_boxes = [QLineEdit() for _ in range(6)]
+        self.col1_line_edits = [QLineEdit() for _ in range(6)]
+        self.col2_line_edits = [QLineEdit() for _ in range(6)]
 
         # Initialize buttons
         self.start_button = QPushButton("Start Experiment")
@@ -58,9 +64,19 @@ class ExperimentApp(QWidget):
         # Create layouts
         layout = QGridLayout()
 
-        # Setup hash and experiment type labels
-        layout.addWidget(self.hash_label, 0, 0)
+        # Setup hash label, line edit, and button
+        hash_layout = QHBoxLayout()
+        hash_layout.addWidget(self.hash_label)
+        hash_layout.addWidget(self.hash_line_edit)
+        hash_layout.addWidget(self.hash_button)
+        layout.addLayout(hash_layout, 0, 0, 1, 1)
+
+        # Setup experiment type label
         layout.addWidget(self.experiment_type_label, 0, 1)
+
+        # Add space between the labels and the counters
+        spacer = QSpacerItem(0, 40, QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout.addItem(spacer, 1, 0)
 
         # Set the counters to read-only so the user can't edit them
         self.elapsed_time_counter.setReadOnly(True)
@@ -71,29 +87,31 @@ class ExperimentApp(QWidget):
         self.next_action_counter.setDisplayFormat("mm:ss")
 
         # Add the counters to the layout
-        layout.addWidget(QLabel("Elapsed Time"), 1, 0)
-        layout.addWidget(self.elapsed_time_counter, 1, 1)
-        layout.addWidget(QLabel("Next Action in"), 1, 2)
-        layout.addWidget(self.next_action_counter, 1, 3)
+        counter_layout = QHBoxLayout()
+        counter_layout.addWidget(self.elapsed_time_label)
+        counter_layout.addWidget(self.elapsed_time_counter)
+        counter_layout.addWidget(self.next_action_label)
+        counter_layout.addWidget(self.next_action_counter)
+        layout.addLayout(counter_layout, 1, 0, 1, 2)
 
         # Create a QTimer to update the counters every second
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_counters)
 
-        # Setup table labels and text boxes
+        # Setup table labels and line edits
         layout.addWidget(self.usage_label, 2, 0)
         layout.addWidget(self.col1_label, 3, 0)
         layout.addWidget(self.col2_label, 3, 1)
-        for i, usage_text_box in enumerate(self.col1_text_boxes):
-            layout.addWidget(usage_text_box, i+4, 0)
-        for i, clock_text_box in enumerate(self.col2_text_boxes):
-            layout.addWidget(clock_text_box, i+4, 1)
+        for i, usage_line_edit in enumerate(self.col1_line_edits):
+            layout.addWidget(usage_line_edit, i+4, 0)
+        for i, clock_line_edit in enumerate(self.col2_line_edits):
+            layout.addWidget(clock_line_edit, i+4, 1)
 
         # Add space between the table and the buttons
         spacer = QSpacerItem(0, 40, QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addItem(spacer, 10, 0)
 
-        # Setup buttons
+        # Setup start, end and export buttons
         self.start_button.setFixedHeight(50)
         self.end_button.setFixedHeight(50)
         self.export_button.setFixedHeight(50)
@@ -107,6 +125,7 @@ class ExperimentApp(QWidget):
         self.setLayout(layout)
 
         # Connect signals and slots
+        self.hash_button.clicked.connect(self.generate_hash)
         self.start_button.clicked.connect(self.start_experiment)
         self.end_button.clicked.connect(self.end_experiment)
         self.export_button.clicked.connect(self.export_data)
@@ -143,6 +162,10 @@ class ExperimentApp(QWidget):
         for hold_time_point, hold_duration in zip(hold_time_points, hold_durations):
             print(hold_time_point, "(", hold_duration, "seconds )")
 
+    def generate_hash(self):
+        # Add code to generate a hash
+        pass
+    
     def start_experiment(self):
         # Start the timer
         self.timer.start(1000)
