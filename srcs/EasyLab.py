@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QLineEdit, QGridLayout, QTimeEdit, \
-    QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QLineEdit, QGridLayout, QTimeEdit, \
+    QSpacerItem, QSizePolicy, QComboBox
 from PyQt5.QtCore import QTimer, QTime
 from PyQt5.QtGui import QGuiApplication
 import random
@@ -13,10 +13,22 @@ class ExperimentApp(QWidget):
         # Initialize hash label, line edit, and button
         self.hash_label = QLabel("Hash:")
         self.hash_line_edit = QLineEdit()
-        self.hash_button = QPushButton("Generate Hash")
+        self.hash_line_edit.setReadOnly(True)
+        self.hash_edit_button = QPushButton("Edit Hash")
+        self.hash_gen_button = QPushButton("Generate Hash")
 
-        # Initialize experiment type label
-        self.experiment_type_label = QLabel("Experiment Type:")
+        # Initialize experiment type label and dropdown
+        self.experiment_label = QLabel("Experiment Type:")
+        self.experiment_dropdown = QComboBox()
+        self.experiment_dropdown.addItem("Experiment 1: Inhaler Usage")
+        self.experiment_dropdown.addItem("Experiment 2: Inhaler Dumping")
+
+        # Initialize inhaler type label and dropdown
+        self.inhaler_label = QLabel("Inahler Type:")
+        self.inhaler_dropdown = QComboBox()
+        self.inhaler_dropdown.addItem("pMDI")
+        self.inhaler_dropdown.addItem("Turbohaler")
+        self.inhaler_dropdown.addItem("Diskus")
 
         # Initialize time counters
         self.elapsed_time_label = QLabel("Elapsed Time")
@@ -61,22 +73,48 @@ class ExperimentApp(QWidget):
 
 
         #* Setup the widgets
-        # Create layouts
-        layout = QGridLayout()
+        # Create the main layout
+        layout = QVBoxLayout()
 
-        # Setup hash label, line edit, and button
+        # Setup hash label, line edit, and buttons
         hash_layout = QHBoxLayout()
-        hash_layout.addWidget(self.hash_label)
-        hash_layout.addWidget(self.hash_line_edit)
-        hash_layout.addWidget(self.hash_button)
-        layout.addLayout(hash_layout, 0, 0, 1, 1)
+        self.hash_label.setFixedWidth(130)    # Set the width for all labels to align them
+        self.hash_line_edit.setMaxLength(10)    # Set the maximum number of characters
+        metrics = self.hash_line_edit.fontMetrics()    # Get the font metrics
+        width = metrics.boundingRect("Z" * 13).width()    # Calculate the width of 10 characters
+        self.hash_line_edit.setFixedWidth(width)    # Set the width of the line edit
+        metrics = self.hash_edit_button.fontMetrics()    # Get the font metrics
+        width = metrics.boundingRect("Confirm Hash").width()    # Calculate the width of the button
+        width += 40    # Add some extra width
+        self.hash_edit_button.setFixedWidth(width)    # Set the width of the button
 
-        # Setup experiment type label
-        layout.addWidget(self.experiment_type_label, 0, 1)
+        hash_layout.addWidget(self.hash_label)
+        # spacer = QSpacerItem(100, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        # hash_layout.addItem(spacer)
+        hash_layout.addWidget(self.hash_line_edit)
+        hash_layout.addWidget(self.hash_edit_button)
+        hash_layout.addWidget(self.hash_gen_button)
+        hash_layout.addStretch()
+        layout.addLayout(hash_layout)
+
+        # Setup experiment type label and dropdown
+        experiment_layout = QHBoxLayout()
+        self.experiment_label.setFixedWidth(130)    # Set the width for all labels to align them
+        experiment_layout.addWidget(self.experiment_label)
+        experiment_layout.addWidget(self.experiment_dropdown)
+        experiment_layout.addStretch()
+        layout.addLayout(experiment_layout)
+
+        # Setup inhaler type label and dropdown
+        inhaler_layout = QHBoxLayout()
+        self.inhaler_label.setFixedWidth(130)    # Set the width for all labels to align them
+        inhaler_layout.addWidget(self.inhaler_label)
+        inhaler_layout.addWidget(self.inhaler_dropdown)
+        inhaler_layout.addStretch()
+        layout.addLayout(inhaler_layout)
 
         # Add space between the labels and the counters
-        spacer = QSpacerItem(0, 40, QSizePolicy.Expanding, QSizePolicy.Expanding)
-        layout.addItem(spacer, 1, 0)
+        layout.addStretch()
 
         # Set the counters to read-only so the user can't edit them
         self.elapsed_time_counter.setReadOnly(True)
@@ -92,40 +130,40 @@ class ExperimentApp(QWidget):
         counter_layout.addWidget(self.elapsed_time_counter)
         counter_layout.addWidget(self.next_action_label)
         counter_layout.addWidget(self.next_action_counter)
-        layout.addLayout(counter_layout, 1, 0, 1, 2)
+        layout.addLayout(counter_layout)
+        layout.addStretch()
 
         # Create a QTimer to update the counters every second
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_counters)
 
         # Setup table labels and line edits
-        layout.addWidget(self.usage_label, 2, 0)
-        layout.addWidget(self.col1_label, 3, 0)
-        layout.addWidget(self.col2_label, 3, 1)
-        for i, usage_line_edit in enumerate(self.col1_line_edits):
-            layout.addWidget(usage_line_edit, i+4, 0)
-        for i, clock_line_edit in enumerate(self.col2_line_edits):
-            layout.addWidget(clock_line_edit, i+4, 1)
-
-        # Add space between the table and the buttons
-        spacer = QSpacerItem(0, 40, QSizePolicy.Expanding, QSizePolicy.Expanding)
-        layout.addItem(spacer, 10, 0)
+        layout.addWidget(self.usage_label)
+        table_layout = QGridLayout()
+        table_layout.addWidget(self.col1_label, 0, 0)
+        table_layout.addWidget(self.col2_label, 0, 1)
+        for col1_line_edit, col2_line_edit in zip(self.col1_line_edits, self.col2_line_edits):
+            table_layout.addWidget(col1_line_edit)
+            table_layout.addWidget(col2_line_edit)
+        layout.addLayout(table_layout)
+        layout.addStretch()
 
         # Setup start, end and export buttons
+        button_layout = QHBoxLayout()
         self.start_button.setFixedHeight(50)
         self.end_button.setFixedHeight(50)
         self.export_button.setFixedHeight(50)
-        button_layout = QHBoxLayout()
         button_layout.addWidget(self.start_button)
         button_layout.addWidget(self.end_button)
         button_layout.addWidget(self.export_button)
-        layout.addLayout(button_layout, 11, 0, 1, 2)
+        layout.addLayout(button_layout)
 
         # Set the layout for the window
         self.setLayout(layout)
 
         # Connect signals and slots
-        self.hash_button.clicked.connect(self.generate_hash)
+        self.hash_edit_button.clicked.connect(self.edit_hash)
+        self.hash_gen_button.clicked.connect(self.generate_hash)
         self.start_button.clicked.connect(self.start_experiment)
         self.end_button.clicked.connect(self.end_experiment)
         self.export_button.clicked.connect(self.export_data)
@@ -162,6 +200,15 @@ class ExperimentApp(QWidget):
         for hold_time_point, hold_duration in zip(hold_time_points, hold_durations):
             print(hold_time_point, "(", hold_duration, "seconds )")
 
+    def edit_hash(self):
+        if self.hash_line_edit.isReadOnly():
+            self.hash_edit_button.setText("Confirm Hash")
+            self.hash_line_edit.setReadOnly(False)
+            self.hash_line_edit.setFocus()
+        else:
+            self.hash_edit_button.setText("Edit Hash")
+            self.hash_line_edit.setReadOnly(True)
+    
     def generate_hash(self):
         # Add code to generate a hash
         pass
