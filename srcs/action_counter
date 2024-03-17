@@ -1,0 +1,80 @@
+from PyQt5.QtWidgets import QLCDNumber
+from PyQt5.QtGui import QColor
+from PyQt5.QtCore import QTimer, pyqtSignal, QPropertyAnimation
+
+
+class ActionCounter(QLCDNumber):
+    time_reached = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # Set the display style
+        self.setStyleSheet("""
+            background-color: white;
+            color: black;
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
+        self.setSegmentStyle(QLCDNumber.Flat)
+        self.setDigitCount(5)  # Display format: mm:ss
+        self.setFixedSize(300, 100)
+
+        # Initialize the counter and the timer
+        self.times = list()
+        self.current_time_index = 0
+        self.remaining_time = 0
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_counter)
+        self.display("--:--")  # Initial display
+
+        # Initialize the animation
+        self.animation = QPropertyAnimation(self, b"color")
+        self.animation.setDuration(2000)  # 2 seconds
+        self.animation.setStartValue(QColor(0, 0, 0))  # Black
+        self.animation.setEndValue(QColor(255, 255, 255))  # White
+        self.animation.finished.connect(self.reset_color)   #TODO: Better do this in another way?
+
+    def start(self, times):
+        self.times = times
+        self.remaining_time = self.times[self.current_time_index]
+        self.timer.start(1000)  # Update the counter every second
+
+    def stop(self):
+        self.timer.stop()
+        self.current_time_index = 0
+        self.remaining_time = 0
+        self.display("--:--")
+
+    def update_counter(self):
+        self.remaining_time -= 1  # Decrement the remaining time
+        self.display_time()
+
+        # Check if the time has reached zero
+        if self.remaining_time == 0:
+            self.animate()  # Start the animation
+            self.time_reached.emit()  # Emit the time_reached signal #TODO: How fast can I connect it? Or better use other way?
+
+            # Move to the next time, if there is one
+            self.current_time_index += 1
+            if self.current_time_index < len(self.times):
+                self.remaining_time = self.times[self.current_time_index]
+            else:
+                self.stop()  # Stop the timer
+
+    def display_time(self):
+        minutes = self.remaining_time // 60
+        seconds = self.remaining_time % 60
+        self.display(f"{minutes:02d}:{seconds:02d}")  # Update the display
+
+    def animate(self):
+        self.animation.start()
+        #TODO: Try displaying string, e.g.g "Inhale"
+
+    def reset_color(self):
+        self.setStyleSheet("""
+            background-color: white;
+            color: black;
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
