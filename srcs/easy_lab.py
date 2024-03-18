@@ -81,6 +81,14 @@ class EasyLab(QWidget):
         self.hold_durations = list()
         self.hold_clock_times = list()
 
+        # Initialize dict that contains schedule of experiment
+        self.schedule = dict()  # Example: (150: ("Hold", 25))
+        
+        # Initialize the key and value pair in the schedule
+        self.next_action_time_point = None
+        self.next_action = ""
+        self.next_action_duration = None
+
         # Keep track of message boxes
         self.message_box = None
 
@@ -315,6 +323,8 @@ class EasyLab(QWidget):
         self.hash_edit_button.clicked.connect(self.edit_hash)
         self.hash_gen_button.clicked.connect(self.generate_hash)
         self.experiment_dropdown.currentIndexChanged.connect(self.on_experiment_changed)
+        self.action_counter.time_reached.connect(self.start_action)
+        self.action_counter.style_changed.connect(self.change_action_style)
         self.elapsed_counter.time_reached.connect(self.stop_experiment)
         self.rand_button.clicked.connect(self.on_rand_button_clicked)
         self.export_button.clicked.connect(self.export_data)
@@ -383,6 +393,7 @@ class EasyLab(QWidget):
         # Delete current times before generating new times
         self.delete_time_points()
         self.delete_clock_times()
+        self.delete_schedule()
 
         # Note: all times in seconds
 
@@ -441,6 +452,13 @@ class EasyLab(QWidget):
             minutes, seconds = divmod(self.hold_time_points[index], 60)
             self.t2_col1_line_edits[index].setText(f"{minutes:02d}:{seconds:02d} ({self.hold_durations[index]} seconds)")
 
+        #! REMOVE THIS AFTER TESTING !!!!!
+            self.usage_time_points[0] = 4
+            self.usage_time_points[1] = 45
+            self.t1_col1_line_edits[0].setText("00:04")
+            self.t1_col1_line_edits[1].setText("00:45")
+        #! REMOVE END
+
     def generate_times_e2(self):
         #! Assumption 1: The times must be so that they begin and end inside the same 10 minute intervall
             #! Assumption 1.1: Between end of dumping and end of current intervall, there must be at least 1 second 
@@ -463,6 +481,7 @@ class EasyLab(QWidget):
         # Delete current times before generating new times
         self.delete_time_points()
         self.delete_clock_times()
+        self.delete_schedule()
 
         # Note: all times in seconds
 
@@ -559,6 +578,13 @@ class EasyLab(QWidget):
             self.t1_col2_line_edits[i].clear()
             self.t2_col2_line_edits[i].clear()
 
+    def delete_schedule(self):
+        # Clear schedule dict and corresponding variables
+        self.schedule.clear()
+        self.next_action_time_point = None
+        self.next_action = ""
+        self.next_action_duration = None
+
     def calculate_clock_times(self, current_time):
         if self.experiment_dropdown.currentText() == "Experiment 1: Inhaler Usage":
             # Calculate usage clock times
@@ -602,6 +628,7 @@ class EasyLab(QWidget):
                 if reply == QMessageBox.No:
                     return
             self.delete_clock_times() # Delete current clock times
+            self.delete_schedule() # Delete current schedule
             self.start_experiment()
         else:
             self.message_box = QMessageBox(self)
@@ -614,12 +641,26 @@ class EasyLab(QWidget):
                 self.stop_experiment()
 
     def start_experiment(self):
+        #TODO: Also implement for e2 (need to check experiment type)
+        # Setup the schedule dict:
+        # 1. Add entries from usage_time_points
+        for time_point in self.usage_time_points:
+            self.schedule[time_point] = ("Inhale", 10)
+        # 2. Add entries from hold_time_points
+        for i, time_point in enumerate(self.hold_time_points):
+            self.schedule[time_point] = ("Hold", self.hold_durations[i])
+        # 3. Sort the schedule dict
+        self.schedule = dict(sorted(self.schedule.items()))
+
+        # Display the first action
+        self.display_upcoming_action()
+
         # Change the button text
         self.start_stop_button.setText("Stop Experiment")
 
         # Display intital counter values
         self.elapsed_counter.display("00:00")  # Initial display
-        minutes, seconds = divmod(self.usage_time_points[0], 60)
+        minutes, seconds = divmod(self.next_action_time_point, 60)
         self.action_counter.display(f"{minutes:02d}:{seconds:02d}")  # Initial display
 
         # Start the timers
@@ -644,6 +685,15 @@ class EasyLab(QWidget):
         self.elapsed_counter.stop()
         self.action_counter.stop()
 
+        # Reset styles
+        self.upcoming_action_label.setStyleSheet("""
+            background-color: white;
+            font: bold 42pt;
+            color: lightgray;
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
+
         # Display a message
         #? If wished, make the tables writeable now
         QMessageBox.information(self, "Experiment Stopped", "The experiment has been stopped. You can now export the data.")
@@ -652,6 +702,70 @@ class EasyLab(QWidget):
         self.clock.restart()    # Sync the clock
         self.elapsed_counter.start()
         self.action_counter.start(self.usage_time_points)
+
+    def display_upcoming_action(self):
+        # When schedule is empty (all actions are done), clear the upcoming action label
+        if not self.schedule:
+            self.upcoming_action_label.setText("")
+            return
+
+        # Pop first action from schedule
+        time_point = next(iter(self.schedule))
+        (action, duration) = self.schedule.pop(time_point)
+        self.next_action_time_point = time_point
+        self.next_action = action
+        self.next_action_duration = duration
+
+        # Case 1: Next action = Inhale
+        if action == "Inhale":
+            self.upcoming_action_label.setText("Inhale")
+        # Case 2: Next action = Hold
+        elif action == "Hold":
+            self.upcoming_action_label.setText(f"Hold ({duration} s)")
+        # Case 3: Next action = Dump
+        elif action == "Dump":
+            self.upcoming_action_label.setText(f"Dump ({duration} s)")
+
+   
+    def start_action(self):
+        # Apply the new style
+        self.upcoming_action_label.setStyleSheet("""
+            background-color: white;
+            font: bold 42pt;
+            color: green;
+            border: 3px solid green;
+            border-radius: 10px;
+        """)
+
+        # Start timer until end of action
+        QTimer.singleShot((self.next_action_duration * 1000), self.stop_action)
+
+    def stop_action(self):
+        # Apply the default style
+        self.upcoming_action_label.setStyleSheet("""
+            background-color: white;
+            font: bold 42pt;
+            color: lightgray;
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
+
+        # Display the next action
+        self.display_upcoming_action()
+
+        #TODO:(Gray out lines in table1 and table2)
+
+    def change_action_style(self, color):
+        if color == "black":
+            pass
+        elif color == "orange":
+            pass
+        elif color == "red":
+            pass
+        elif color == "green":
+            pass
+        else:
+            pass
 
 def main():
     # Create the application
