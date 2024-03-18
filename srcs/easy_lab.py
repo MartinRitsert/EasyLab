@@ -3,9 +3,9 @@ import random
 import string
 
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QGridLayout, \
-    QSpacerItem, QSizePolicy, QComboBox, QMessageBox
-from PyQt5.QtCore import QTimer, QTime, pyqtSignal
-from PyQt5.QtGui import QGuiApplication
+    QSpacerItem, QSizePolicy, QComboBox, QMessageBox, QFrame
+from PyQt5.QtCore import Qt, QTimer, QTime, pyqtSignal
+from PyQt5.QtGui import QGuiApplication, QFont
 
 from digital_clock import DigitalClock
 from elapsed_counter import ElapsedCounter
@@ -40,8 +40,9 @@ class EasyLab(QWidget):
         # Initialize clock
         self.clock = DigitalClock()
 
-        # Initialize time counters
-        self.action_label = QLabel("Next Action in:")
+        # Initialize time counters and upcoming action label
+        self.action_label = QLabel("Next Action:")
+        self.upcoming_action_label = QLabel("Inhale (109 s)")
         self.action_counter = ActionCounter()
         self.elapsed_label = QLabel("Elapsed Time:")
         self.elapsed_counter = ElapsedCounter()
@@ -83,6 +84,10 @@ class EasyLab(QWidget):
         # Keep track of message boxes
         self.message_box = None
 
+        # Load standard stylesheet
+        with open("srcs/style.qss", "r") as file:
+            self.stylesheet = file.read()
+
         # Setup the UI
         self.setup_ui()
 
@@ -95,8 +100,8 @@ class EasyLab(QWidget):
         screenHeight = screen.height()
 
         # Window size
-        winWidth = int(screenWidth // 1.4)
-        winHeight = int(screenHeight // 1.6)
+        winWidth = int(screenWidth // 1.9)
+        winHeight = int(screenHeight // 1.4)
 
         # Calculate window position
         x = (screenWidth - winWidth) // 2
@@ -117,15 +122,20 @@ class EasyLab(QWidget):
 
         # Setup hash label, line edit, and buttons
         hash_layout = QHBoxLayout()
+        hash_layout.setSpacing(7)  # Set the spacing between the widgets
         self.hash_label.setFixedWidth(130)    # Set the width for all labels to align them
         self.hash_line_edit.setMaxLength(10)    # Set the maximum number of characters
         metrics = self.hash_line_edit.fontMetrics()    # Get the font metrics
         width = metrics.boundingRect("Z" * 13).width()    # Calculate the width of 10 characters
         self.hash_line_edit.setFixedWidth(width)    # Set the width of the line edit
+        self.hash_line_edit.setStyleSheet(self.stylesheet)
         metrics = self.hash_edit_button.fontMetrics()    # Get the font metrics
         width = metrics.boundingRect("Confirm Hash").width()    # Calculate the width of the button
         width += 40    # Add some extra width
         self.hash_edit_button.setFixedWidth(width)    # Set the width of the button
+        self.hash_edit_button.setStyleSheet(self.stylesheet)
+        self.hash_gen_button.setFixedWidth(width)    # Set the width of the button
+        self.hash_gen_button.setStyleSheet(self.stylesheet)
 
         hash_layout.addWidget(self.hash_label)
         # spacer = QSpacerItem(100, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
@@ -140,6 +150,7 @@ class EasyLab(QWidget):
         experiment_layout = QHBoxLayout()
         self.experiment_label.setFixedWidth(130)    # Set the width for all labels to align them
         experiment_layout.addWidget(self.experiment_label)
+        self.experiment_dropdown.setStyleSheet(self.stylesheet)
         experiment_layout.addWidget(self.experiment_dropdown)
         experiment_layout.addStretch()
         top_layout.addLayout(experiment_layout, 1, 0)
@@ -148,6 +159,7 @@ class EasyLab(QWidget):
         inhaler_layout = QHBoxLayout()
         self.inhaler_label.setFixedWidth(130)    # Set the width for all labels to align them
         inhaler_layout.addWidget(self.inhaler_label)
+        self.inhaler_dropdown.setStyleSheet(self.stylesheet)
         inhaler_layout.addWidget(self.inhaler_dropdown)
         inhaler_layout.addStretch()
         top_layout.addLayout(inhaler_layout, 2, 0)
@@ -161,50 +173,139 @@ class EasyLab(QWidget):
         # Add space between the labels and the counters
         layout.addStretch()
 
-        # Set the counters to display time in mm:ss format
-        # self.elapsed_counter.
+        # Setup counter labels
+        counter_labels_layout = QHBoxLayout()
+        self.action_label.setAlignment(Qt.AlignCenter)
+        self.action_label.setFixedSize(710, 30)
+        self.action_label.setStyleSheet("""
+            background-color: white;
+            font: bold 14pt;
+            color: black;
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
+        counter_labels_layout.addWidget(self.action_label)
+        # counter_labels_layout.setAlignment(self.action_label, Qt.AlignCenter)
+        counter_labels_layout.addStretch()
+        self.elapsed_label.setAlignment(Qt.AlignCenter)
+        self.elapsed_label.setFixedSize(300, 30)
+        self.elapsed_label.setStyleSheet("""
+            background-color: white;
+            font: bold 14pt;
+            color: black;
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
+        counter_labels_layout.addWidget(self.elapsed_label)
+        # counter_labels_layout.setAlignment(self.elapsed_label, Qt.AlignRight)
+        layout.addLayout(counter_labels_layout)
 
-        # Add the counters to the layout
+        # Setup counters and upcoming action label
         counter_layout = QHBoxLayout()
-        counter_layout.addWidget(self.action_label)
+        counter_layout.setSpacing(10)
+        self.upcoming_action_label.setAlignment(Qt.AlignCenter)
+        self.upcoming_action_label.setFixedSize(400, 100)
+        self.upcoming_action_label.setStyleSheet("""
+            background-color: white;
+            font: bold 42pt;
+            color: lightgray;
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
+        counter_layout.addWidget(self.upcoming_action_label)
         counter_layout.addWidget(self.action_counter)
-        counter_layout.addWidget(self.elapsed_label)
+        # counter_layout.setAlignment(self.action_counter, Qt.AlignRight)
+        counter_layout.addStretch()
         counter_layout.addWidget(self.elapsed_counter)
+        # counter_layout.setAlignment(self.elapsed_counter, Qt.AlignRight)
         layout.addLayout(counter_layout)
         layout.addStretch()
 
         # Setup table1 labels and line edits
-        layout.addWidget(self.table1_label)
-        table1_layout = QGridLayout()
-        table1_layout.addWidget(self.t1_col1_label, 0, 0)
-        table1_layout.addWidget(self.t1_col2_label, 0, 1)
+        t1_frame = QFrame()     # Create a frame for table1
+        t1_frame.setStyleSheet("""
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
+
+        t1_frame_layout = QVBoxLayout(t1_frame)
+        self.table1_label.setStyleSheet("""
+            font: bold 16pt;
+            border: none;
+        """)
+        t1_frame_layout.addWidget(self.table1_label)
+
+        t1_layout = QGridLayout()
+        for label in [self.t1_col1_label, self.t1_col2_label]:
+            label.setStyleSheet("""
+                font: bold 14pt;
+                border: none;
+            """)
+        t1_layout.addWidget(self.t1_col1_label, 0, 0)
+        t1_layout.addWidget(self.t1_col2_label, 0, 1)
+
+        t_stylesheet = ("""
+            border: 1px solid gray;
+            border-radius: 6px;
+            padding-left: 2px;
+        """)
         for col1_line_edit, col2_line_edit in zip(self.t1_col1_line_edits, self.t1_col2_line_edits):
-            table1_layout.addWidget(col1_line_edit)
-            table1_layout.addWidget(col2_line_edit)
-        layout.addLayout(table1_layout)
+            col1_line_edit.setStyleSheet(t_stylesheet)
+            col2_line_edit.setStyleSheet(t_stylesheet)
+            t1_layout.addWidget(col1_line_edit)
+            t1_layout.addWidget(col2_line_edit)
+        t1_frame_layout.addLayout(t1_layout)
+        layout.addWidget(t1_frame)
         layout.addStretch()
 
         # Setup table2 labels and line edits
-        layout.addWidget(self.table2_label)
-        table2_layout = QGridLayout()
-        table2_layout.addWidget(self.t2_col1_label, 0, 0)
-        table2_layout.addWidget(self.t2_col2_label, 0, 1)
+        t2_frame = QFrame()     # Create a frame for table2
+        t2_frame.setStyleSheet("""
+            border: 1px solid black;
+            border-radius: 10px;
+        """)
+
+        t2_frame_layout = QVBoxLayout(t2_frame)
+        self.table2_label.setStyleSheet("""
+            font: bold 16pt;
+            border: none;
+        """)
+        t2_frame_layout.addWidget(self.table2_label)
+
+        t2_layout = QGridLayout()
+        for label in [self.t2_col1_label, self.t2_col2_label]:
+            label.setStyleSheet("""
+                font: bold 14pt;
+                border: none;
+            """)
+        t2_layout.addWidget(self.t2_col1_label, 0, 0)
+        t2_layout.addWidget(self.t2_col2_label, 0, 1)
+
         for col1_line_edit, col2_line_edit in zip(self.t2_col1_line_edits, self.t2_col2_line_edits):
-            table2_layout.addWidget(col1_line_edit)
-            table2_layout.addWidget(col2_line_edit)
-        layout.addLayout(table2_layout)
+            col1_line_edit.setStyleSheet(t_stylesheet)
+            col2_line_edit.setStyleSheet(t_stylesheet)
+            t2_layout.addWidget(col1_line_edit)
+            t2_layout.addWidget(col2_line_edit)
+        t2_frame_layout.addLayout(t2_layout)
+        layout.addWidget(t2_frame)
         layout.addStretch()
 
         # Setup randomization and export buttons
         button_layout = QHBoxLayout()
         self.rand_button.setFixedHeight(50)
+        self.rand_button.setStyleSheet(self.stylesheet)
+        self.rand_button.setFont(QFont("Arial", 16))
         self.export_button.setFixedHeight(50)
+        self.export_button.setStyleSheet(self.stylesheet)
+        self.export_button.setFont(QFont("Arial", 16))
         button_layout.addWidget(self.rand_button)
         button_layout.addWidget(self.export_button)
         layout.addLayout(button_layout)
 
         # Setup start_stop button
         self.start_stop_button.setFixedHeight(50)
+        self.start_stop_button.setStyleSheet(self.stylesheet)
+        self.start_stop_button.setFont(QFont("Arial", 16))
         layout.addWidget(self.start_stop_button)
 
         # Set the layout for the window
@@ -555,6 +656,8 @@ class EasyLab(QWidget):
 def main():
     # Create the application
     app = QApplication(sys.argv)
+
+    # Create the main window
     experiment_app = EasyLab()
 
     # Exit the application

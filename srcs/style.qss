@@ -1,0 +1,34 @@
+
+/* Set the background color of the main window */
+/* QWidget {
+    background-color: #fff;
+} */
+
+/* Set the font and font size for all text */
+QLabel, QLineEdit {
+    border: 1px solid lightgray;
+    border-radius: 6px;
+    padding: 1px 2px;
+}
+
+/* Style the buttons */
+QPushButton {
+    background-color: #2C6EBE;
+    color: #fff;
+    padding: 2px 2px;
+    border: 1px solid lightgray;
+    border-radius: 6px;
+    font-weight: normal;
+}
+
+QPushButton:hover {
+    background-color: #548CCC;
+    border: 1px solid #548CCC;
+    border-radius: 5px;
+}
+
+QPushButton:pressed {
+    background-color: #1A5CA8;
+    border: 1px solid #1A5CA8;
+    border-radius: 5px;
+}
