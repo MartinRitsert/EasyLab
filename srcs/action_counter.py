@@ -118,6 +118,7 @@ class ActionCounter(QLCDNumber):
                 # Need to calculate the difference between two time_points
                 self.remaining_time = self.time_points[self.current_time_index] - self.time_points[self.current_time_index - 1]
             else:
+                self.animation_group.stop()  # Stop the animation
                 self.stop()  # Stop the timer
 
     def display_time(self):
