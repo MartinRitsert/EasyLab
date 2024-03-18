@@ -13,7 +13,7 @@ class DigitalClock(QLCDNumber):
         self.timer = QTimer(self)
         time_until_next_second = 1000 - QTime.currentTime().msec()
         QTimer.singleShot(time_until_next_second, self.showTime)    # Ensure that the time is displayed exactly on every second-change
-        self.timer.start(1000)  # Update the time every second
+        self.start()   # Start the timer
         self.timer.timeout.connect(self.showTime)
         
         # Set the display style
@@ -27,6 +27,12 @@ class DigitalClock(QLCDNumber):
         self.setDigitCount(8)
         self.setFixedSize(300, 100)
 
+    def start(self):
+        self.timer.start(1000)  # Update the time every second
+
+    def restart(self):
+        self.timer.stop()
+        self.start()
 
     def showTime(self):
         time = QTime.currentTime()

@@ -1,5 +1,4 @@
-from PyQt5.QtWidgets import QLCDNumber
-from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QLCDNumber, QGraphicsOpacityEffect
 from PyQt5.QtCore import QTimer, pyqtSignal, QPropertyAnimation
 
 
@@ -8,6 +7,14 @@ class ActionCounter(QLCDNumber):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        # Initialize the counter and the timer
+        self.times = list()
+        self.current_time_index = 0
+        self.remaining_time = 0
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_counter)
+        self.display("--:--")  # Initial display
 
         # Set the display style
         self.setStyleSheet("""
@@ -20,20 +27,15 @@ class ActionCounter(QLCDNumber):
         self.setDigitCount(5)  # Display format: mm:ss
         self.setFixedSize(300, 100)
 
-        # Initialize the counter and the timer
-        self.times = list()
-        self.current_time_index = 0
-        self.remaining_time = 0
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_counter)
-        self.display("--:--")  # Initial display
+        # Initialize the opacity effect and the animation
+        self.opacity_effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.opacity_effect)
+        self.animation = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.animation.setDuration(1000)  # 2 seconds
+        self.animation.setStartValue(1)  # Fully opaque
+        self.animation.setEndValue(0)  # Fully transparent
+        self.animation.stateChanged.connect(self.animate)
 
-        # Initialize the animation
-        self.animation = QPropertyAnimation(self, b"color")
-        self.animation.setDuration(2000)  # 2 seconds
-        self.animation.setStartValue(QColor(0, 0, 0))  # Black
-        self.animation.setEndValue(QColor(255, 255, 255))  # White
-        self.animation.finished.connect(self.reset_color)   #TODO: Better do this in another way?
 
     def start(self, times):
         self.times = times
@@ -48,11 +50,14 @@ class ActionCounter(QLCDNumber):
 
     def update_counter(self):
         self.remaining_time -= 1  # Decrement the remaining time
-        self.display_time()
+        if self.animation.state() != QPropertyAnimation.Running:
+            self.display_time()
 
         # Check if the time has reached zero
         if self.remaining_time == 0:
-            self.animate()  # Start the animation
+            if self.animation.state() == QPropertyAnimation.Running:    # If another animation is already running, stop it
+                self.animation.stop()
+            self.animation.start()  # Start the animation
             self.time_reached.emit()  # Emit the time_reached signal #TODO: How fast can I connect it? Or better use other way?
 
             # Move to the next time, if there is one
@@ -63,15 +68,27 @@ class ActionCounter(QLCDNumber):
                 self.stop()  # Stop the timer
 
     def display_time(self):
-        minutes = self.remaining_time // 60
-        seconds = self.remaining_time % 60
+        minutes, seconds = divmod(self.remaining_time, 60)
         self.display(f"{minutes:02d}:{seconds:02d}")  # Update the display
 
-    def animate(self):
-        self.animation.start()
-        #TODO: Try displaying string, e.g.g "Inhale"
+    def animate(self, state):
+        if state == QPropertyAnimation.Stopped:
+            self.end_animation()
+        elif state == QPropertyAnimation.Running:
+            self.start_animation()
 
-    def reset_color(self):
+    def start_animation(self):
+        self.display("00:00")
+        self.setStyleSheet("""
+            background-color: white;
+            color: green;
+            border: 1px solid green;
+            border-radius: 10px;
+        """)
+
+    def end_animation(self):
+        self.opacity_effect.setOpacity(1)
+        self.display_time()
         self.setStyleSheet("""
             background-color: white;
             color: black;

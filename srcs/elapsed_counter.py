@@ -38,8 +38,7 @@ class ElapsedCounter(QLCDNumber):
         self.display_time()
 
     def display_time(self):
-        minutes = self.elapsed_time // 60
-        seconds = self.elapsed_time % 60
+        minutes, seconds = divmod(self.elapsed_time, 60)
         self.display(f"{minutes:02d}:{seconds:02d}")  # Update the display
 
         # Check if the limit has been reached
