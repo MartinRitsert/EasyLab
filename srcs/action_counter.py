@@ -10,10 +10,10 @@ class ActionCounter(QLCDNumber):
         super().__init__(parent)
 
         # Initialize the counter and the timer
-        self.times = list()
+        self.time_points = list()
         self.current_time_index = 0
         self.remaining_time = 0
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_counter)
         self.display("--:--")  # Initial display
 
@@ -56,13 +56,13 @@ class ActionCounter(QLCDNumber):
         self.setGraphicsEffect(self.opacity_effect)
 
         self.animation1 = QPropertyAnimation(self.opacity_effect, b"opacity")
-        self.animation1.setDuration(1500)
+        self.animation1.setDuration(1000)
         self.animation1.setStartValue(1)  # Fully opaque
         self.animation1.setEndValue(1)  # Still fully opaque
         self.animation_group.addAnimation(self.animation1)
 
         self.animation2 = QPropertyAnimation(self.opacity_effect, b"opacity")
-        self.animation2.setDuration(300)
+        self.animation2.setDuration(200)
         self.animation2.setStartValue(1)  # Fully opaque
         self.animation2.setEndValue(0)  # Fully transparent
         self.animation_group.addAnimation(self.animation2)
@@ -70,9 +70,9 @@ class ActionCounter(QLCDNumber):
         self.animation_group.stateChanged.connect(self.animate)
 
 
-    def start(self, times):
-        self.times = times
-        self.remaining_time = self.times[self.current_time_index]
+    def start(self, time_points):
+        self.time_points = time_points
+        self.remaining_time = self.time_points[0]
         self.timer.start(1000)  # Update the counter every second
 
         # Set color for new counter
@@ -110,12 +110,13 @@ class ActionCounter(QLCDNumber):
             if self.animation_group.state() == QPropertyAnimation.Running:    # If another animation is already running, stop it
                 self.animation_group.stop()
             self.animation_group.start()  # Start the animation
-            self.time_reached.emit()  # Emit the time_reached signal #TODO: How fast can I connect it? Or better use other way?
+            self.time_reached.emit()  # Emit the time_reached signal
 
             # Move to the next time, if there is one
             self.current_time_index += 1
-            if self.current_time_index < len(self.times):
-                self.remaining_time = self.times[self.current_time_index]
+            if self.current_time_index < len(self.time_points):
+                # Need to calculate the difference between two time_points
+                self.remaining_time = self.time_points[self.current_time_index] - self.time_points[self.current_time_index - 1]
             else:
                 self.stop()  # Stop the timer
 

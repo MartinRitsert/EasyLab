@@ -3,7 +3,7 @@ import random
 import string
 
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QGridLayout, \
-    QSpacerItem, QSizePolicy, QComboBox, QMessageBox, QFrame
+    QSizePolicy, QComboBox, QMessageBox, QFrame
 from PyQt5.QtCore import Qt, QTimer, QTime, pyqtSignal
 from PyQt5.QtGui import QGuiApplication, QFont
 
@@ -28,10 +28,10 @@ class EasyLab(QWidget):
         self.experiment_dropdown = QComboBox()
         self.experiment_dropdown.addItem("Experiment 1: Inhaler Usage")
         self.experiment_dropdown.addItem("Experiment 2: Inhaler Dumping")
-        #TODO: Implement the action happening on changing the experiment (e.g. reset the line edits, change affected labels, etc.)
+        self.experiment_dropdown_index = 0
 
         # Initialize inhaler type label and dropdown
-        self.inhaler_label = QLabel("Inahler Type:")
+        self.inhaler_label = QLabel("Inhaler Type:")
         self.inhaler_dropdown = QComboBox()
         self.inhaler_dropdown.addItem("pMDI")
         self.inhaler_dropdown.addItem("Turbohaler")
@@ -42,7 +42,7 @@ class EasyLab(QWidget):
 
         # Initialize time counters and upcoming action label
         self.action_label = QLabel("Next Action:")
-        self.upcoming_action_label = QLabel("Inhale (109 s)")
+        self.upcoming_action_label = QLabel("")
         self.action_counter = ActionCounter()
         self.elapsed_label = QLabel("Elapsed Time:")
         self.elapsed_counter = ElapsedCounter()
@@ -88,6 +88,11 @@ class EasyLab(QWidget):
         self.next_action_time_point = None
         self.next_action = ""
         self.next_action_duration = None
+
+        # Initialize a QTimer used for countdown inside upcoming_action_label
+        self.action_timer = QTimer(self)
+        self.action_timer_remaining = None
+        self.action_timer.timeout.connect(self.update_upcoming_action_label)
 
         # Keep track of message boxes
         self.message_box = None
@@ -300,20 +305,21 @@ class EasyLab(QWidget):
 
         # Setup randomization and export buttons
         button_layout = QHBoxLayout()
-        self.rand_button.setFixedHeight(50)
+        button_layout.setSpacing(10)
+        self.rand_button.setFixedHeight(30)
         self.rand_button.setStyleSheet(self.stylesheet)
-        self.rand_button.setFont(QFont("Arial", 16))
-        self.export_button.setFixedHeight(50)
+        self.rand_button.setFont(QFont("Arial", 14))
+        self.export_button.setFixedHeight(30)
         self.export_button.setStyleSheet(self.stylesheet)
-        self.export_button.setFont(QFont("Arial", 16))
+        self.export_button.setFont(QFont("Arial", 14))
         button_layout.addWidget(self.rand_button)
         button_layout.addWidget(self.export_button)
         layout.addLayout(button_layout)
 
         # Setup start_stop button
-        self.start_stop_button.setFixedHeight(50)
+        self.start_stop_button.setFixedHeight(30)
         self.start_stop_button.setStyleSheet(self.stylesheet)
-        self.start_stop_button.setFont(QFont("Arial", 16))
+        self.start_stop_button.setFont(QFont("Arial", 14))
         layout.addWidget(self.start_stop_button)
 
         # Set the layout for the window
@@ -351,13 +357,44 @@ class EasyLab(QWidget):
         self.hash_line_edit.setText(hash)
 
     def on_experiment_changed(self, index):
-        selected_text = self.experiment_dropdown.itemText(index)
-        if selected_text == "Option 1":
-            # Do something for Option 1
-            pass
-        elif selected_text == "Option 2":
-            # Do something for Option 2
-            pass
+        # Prevent changing experiment type during an active experiment
+        if self.start_stop_button.text() == "Stop Experiment":
+            QMessageBox.warning(self, "Experiment Running", "Cannot change the experiment type during an active experiment. \
+                                Please stop the experiment before changing the experiment type.")
+            # Manually set the dropdown back to the previous index
+            self.experiment_dropdown.blockSignals(True)
+            self.experiment_dropdown.setCurrentIndex(self.experiment_dropdown_index)
+            self.experiment_dropdown.blockSignals(False)
+            return
+
+        # Ask for confirmation of deleting current times
+        if self.t1_col1_line_edits[0].text():
+            reply = QMessageBox.warning(self, "Delete Data", 'This will delete all "time points and clock times" data. Are you sure that you want to continue?', \
+                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.No:
+                # Manually set the dropdown back to the previous index
+                self.experiment_dropdown.blockSignals(True)
+                self.experiment_dropdown.setCurrentIndex(self.experiment_dropdown_index)
+                self.experiment_dropdown.blockSignals(False)
+                return
+        
+        # Save the current index
+        self.experiment_dropdown_index = index
+
+        # Delete current times, clock times before changing the experiment type
+        self.delete_time_points()
+        self.delete_clock_times()
+        self.delete_schedule()
+
+        # Reset elapsed counter
+        self.elapsed_counter.reset()
+
+        # Change table1 label
+        if index == 0:
+            self.table1_label.setText("Table 1 - Inhaler Usage Times")
+        elif index == 1:
+            self.table1_label.setText("Table 1 - Inhaler Dumping Times")
+
     def on_rand_button_clicked(self):
         # If experiment is running, return
         if self.start_stop_button.text() == "Stop Experiment":
@@ -368,10 +405,9 @@ class EasyLab(QWidget):
             self.generate_times_e1()
         elif self.experiment_dropdown.currentText() == "Experiment 2: Inhaler Dumping":
             self.generate_times_e2()
-        else:
-            QMessageBox.warning(self, "No Experiment Selected", "Please select an experiment type before generating times.")
 
     def generate_times_e1(self):
+        # Note: all times in seconds
         #! Assumption 1: The times must be so that they begin and end inside the same 10 minute intervall
             #! Assumption 1.1: Between start of inhalation and end of current intervall, there must be at least 60 seconds 
                 #! Attention: Especially this one means discrimination as no inhalation starts between x9:xx and x9:59 ever!
@@ -395,7 +431,8 @@ class EasyLab(QWidget):
         self.delete_clock_times()
         self.delete_schedule()
 
-        # Note: all times in seconds
+        # Reset elapsed counter
+        self.elapsed_counter.reset()
 
         # Iterate over all six 10-minute intervals
         for i in range(0, 60*60, 10*60):
@@ -452,24 +489,18 @@ class EasyLab(QWidget):
             minutes, seconds = divmod(self.hold_time_points[index], 60)
             self.t2_col1_line_edits[index].setText(f"{minutes:02d}:{seconds:02d} ({self.hold_durations[index]} seconds)")
 
-        #! REMOVE THIS AFTER TESTING !!!!!
-            self.usage_time_points[0] = 4
-            self.usage_time_points[1] = 45
-            self.t1_col1_line_edits[0].setText("00:04")
-            self.t1_col1_line_edits[1].setText("00:45")
-        #! REMOVE END
-
     def generate_times_e2(self):
+        # Note: all times in seconds
         #! Assumption 1: The times must be so that they begin and end inside the same 10 minute intervall
             #! Assumption 1.1: Between end of dumping and end of current intervall, there must be at least 1 second 
             #! Assumption 1.2: Between end of holding and end of current intervall, there must be at least 1 second
         #! Assumption 2: The times must be so that actions do not overlap
             #! Assumption 2.1: Between end of dumping and start of next action, there must be at least 1 second
             #! Assumption 2.2: Between end of holding and start of next action, there must be at least 1 second
-        #! Assumption 3: The holding duration must be at least 1 second
+        #! Assumption 3: The holding duration must be at least 30 seconds
         #? Question1: Are the assumptions okay?
-        #? Question2: Holding duration [0, 60] okay?
-        #TODO: Check in MS Teams: holding duration, dumping duration
+        #? Question2: Holding duration [30, 70] okay?
+        #? Question3: Dumping duration [60, 119] okay?
 
         # Ask for confirmation of deleting current times
         if self.t1_col1_line_edits[0].text():
@@ -483,16 +514,17 @@ class EasyLab(QWidget):
         self.delete_clock_times()
         self.delete_schedule()
 
-        # Note: all times in seconds
+        # Reset elapsed counter
+        self.elapsed_counter.reset()
 
         # Iterate over all six 10-minute intervals
         for i in range(0, 60*60, 10*60):
 
             # Start randomizing usage time point, hold time point and hold duration
-            dump_time_point = i + random.randint(0, (10*60)-000)    # Assumption 1.1    #!Adjust
-            dump_duration = random.randint(1, 60)    #!Adjust
+            dump_time_point = i + random.randint(0, (10*60)-61)    # Assumption 1.1
+            dump_duration = random.randint(60, 119)
             hold_time_point = i + random.randint(0, (10*60)-2)  # Assumption 1.2 && Assumption 3
-            hold_duration = random.randint(1, 60)   #!Adjust
+            hold_duration = random.randint(30, 70)
 
             # Initialize approved to false
             approved = False
@@ -501,39 +533,39 @@ class EasyLab(QWidget):
             while not approved:
                 # Assumption 1.1
                 if (dump_time_point + dump_duration) >= (i + (10*60)):
-                    dump_time_point = i + random.randint(0, (10*60)-60)
-                    dump_duration = random.randint(1, 60)    #!Adjust
+                    dump_time_point = i + random.randint(0, (10*60)-61)
+                    dump_duration = random.randint(60, 119)
                     hold_time_point = i + random.randint(0, (10*60)-2)
-                    hold_duration = random.randint(1, 60)
+                    hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 1.2
                 if (hold_time_point + hold_duration) >= (i + (10*60)):
-                    dump_time_point = i + random.randint(0, (10*60)-60)
-                    dump_duration = random.randint(1, 60)    #!Adjust
+                    dump_time_point = i + random.randint(0, (10*60)-61)
+                    dump_duration = random.randint(60, 119)
                     hold_time_point = i + random.randint(0, (10*60)-2)
-                    hold_duration = random.randint(1, 60)
+                    hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 2
                 elif dump_time_point == hold_time_point or dump_time_point == (hold_time_point + hold_duration) \
                     or (dump_time_point + dump_duration) == hold_time_point or (dump_time_point + dump_duration) == (hold_time_point + hold_duration):
-                    dump_time_point = i + random.randint(0, (10*60)-60)
-                    dump_duration = random.randint(1, 60)    #!Adjust
+                    dump_time_point = i + random.randint(0, (10*60)-61)
+                    dump_duration = random.randint(60, 119)
                     hold_time_point = i + random.randint(0, (10*60)-2)
-                    hold_duration = random.randint(1, 60)
+                    hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 2.1
                 elif dump_time_point < hold_time_point and (dump_time_point + dump_duration + 1) > hold_time_point:
-                    dump_time_point = i + random.randint(0, (10*60)-60)
-                    dump_duration = random.randint(1, 60)    #!Adjust
+                    dump_time_point = i + random.randint(0, (10*60)-61)
+                    dump_duration = random.randint(60, 119)
                     hold_time_point = i + random.randint(0, (10*60)-2)
-                    hold_duration = random.randint(1, 60)
+                    hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 2.2 && Assumption 3
                 elif hold_time_point < dump_time_point and (hold_time_point + hold_duration + 1) > dump_time_point:
-                    dump_time_point = i + random.randint(0, (10*60)-60)
-                    dump_duration = random.randint(1, 60)    #!Adjust
+                    dump_time_point = i + random.randint(0, (10*60)-61)
+                    dump_duration = random.randint(60, 119)
                     hold_time_point = i + random.randint(0, (10*60)-2)
-                    hold_duration = random.randint(1, 60)
+                    hold_duration = random.randint(30, 70)
                     continue
                 else:
                     approved = True
@@ -641,16 +673,28 @@ class EasyLab(QWidget):
                 self.stop_experiment()
 
     def start_experiment(self):
-        #TODO: Also implement for e2 (need to check experiment type)
-        # Setup the schedule dict:
-        # 1. Add entries from usage_time_points
-        for time_point in self.usage_time_points:
-            self.schedule[time_point] = ("Inhale", 10)
-        # 2. Add entries from hold_time_points
-        for i, time_point in enumerate(self.hold_time_points):
-            self.schedule[time_point] = ("Hold", self.hold_durations[i])
-        # 3. Sort the schedule dict
-        self.schedule = dict(sorted(self.schedule.items()))
+        # Check experiment type and setup schedule dict:
+        if self.experiment_dropdown.currentText() == "Experiment 1: Inhaler Usage":
+            # 1. Add entries from usage_time_points
+            for time_point in self.usage_time_points:
+                self.schedule[time_point] = ("Inhale", 10)
+            # 2. Add entries from hold_time_points
+            for i, time_point in enumerate(self.hold_time_points):
+                self.schedule[time_point] = ("Hold", self.hold_durations[i])
+        elif self.experiment_dropdown.currentText() == "Experiment 2: Inhaler Dumping":
+            # 1. Add entries from dump_time_points
+            for i, time_point in enumerate(self.dump_time_points):
+                self.schedule[time_point] = ("Dump", self.dump_durations[i])
+            # 2. Add entries from hold_time_points
+            for i, time_point in enumerate(self.hold_time_points):
+                self.schedule[time_point] = ("Hold", self.hold_durations[i])
+        else:
+            print("Error: Unknown experiment type")
+            return
+        self.schedule = dict(sorted(self.schedule.items()))    # 3. Sort the schedule dict
+
+        # Extract time_points before poping values from schedule
+        time_points = list(self.schedule.keys())
 
         # Display the first action
         self.display_upcoming_action()
@@ -666,8 +710,7 @@ class EasyLab(QWidget):
         # Start the timers
         current_time = QTime.currentTime()
         time_until_next_second = 1000 - current_time.msec()    # Ensure that the counters are displayed exactly on every second-change
-        #TODO: Depends on experiment type -> implement this
-        QTimer.singleShot(time_until_next_second, self.synced_start)    # Start counters
+        QTimer.singleShot(time_until_next_second, lambda: self.synced_start(time_points))    # Start counters
 
         # Calculate the clock times
         self.calculate_clock_times(current_time)
@@ -685,6 +728,9 @@ class EasyLab(QWidget):
         self.elapsed_counter.stop()
         self.action_counter.stop()
 
+        # Clear the upcoming action label
+        self.upcoming_action_label.setText("")
+
         # Reset styles
         self.upcoming_action_label.setStyleSheet("""
             background-color: white;
@@ -698,10 +744,10 @@ class EasyLab(QWidget):
         #? If wished, make the tables writeable now
         QMessageBox.information(self, "Experiment Stopped", "The experiment has been stopped. You can now export the data.")
 
-    def synced_start(self):
+    def synced_start(self, time_points):
         self.clock.restart()    # Sync the clock
         self.elapsed_counter.start()
-        self.action_counter.start(self.usage_time_points)
+        self.action_counter.start(time_points)
 
     def display_upcoming_action(self):
         # When schedule is empty (all actions are done), clear the upcoming action label
@@ -725,7 +771,6 @@ class EasyLab(QWidget):
         # Case 3: Next action = Dump
         elif action == "Dump":
             self.upcoming_action_label.setText(f"Dump ({duration} s)")
-
    
     def start_action(self):
         # Apply the new style
@@ -738,7 +783,12 @@ class EasyLab(QWidget):
         """)
 
         # Start timer until end of action
-        QTimer.singleShot((self.next_action_duration * 1000), self.stop_action)
+        if self.next_action in ["Hold", "Dump"]:
+            self.action_timer.start(1000)
+            self.action_timer_remaining = self.next_action_duration
+
+        # Start timer until end of action (+1 s to be not abrupt and not interfere with action_counter)
+        QTimer.singleShot((self.next_action_duration + 1) * 1000, self.stop_action)
 
     def stop_action(self):
         # Apply the default style
@@ -754,6 +804,17 @@ class EasyLab(QWidget):
         self.display_upcoming_action()
 
         #TODO:(Gray out lines in table1 and table2)
+
+    def update_upcoming_action_label(self):
+        self.action_timer_remaining -= 1
+        if self.next_action == "Hold":
+            self.upcoming_action_label.setText(f"Hold ({self.action_timer_remaining} s)")
+        elif self.next_action == "Dump":
+            self.upcoming_action_label.setText(f"Dump ({self.action_timer_remaining} s)")
+
+        # Stop the timer when it reaches 0
+        if self.action_timer_remaining == 0:
+            self.action_timer.stop()
 
     def change_action_style(self, color):
         if color == "black":

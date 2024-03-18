@@ -21,7 +21,7 @@ class ElapsedCounter(QLCDNumber):
 
         # Initialize the counter and the timer
         self.elapsed_time = 0
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_counter)
         self.display("00:00")  # Initial display
 
@@ -45,3 +45,6 @@ class ElapsedCounter(QLCDNumber):
         if self.elapsed_time >= (60 * 60):  # 60 minutes * 60 seconds/minute
             self.stop()  # Stop the timer
             self.time_reached.emit()  # Emit the time_reached signal
+
+    def reset(self):
+        self.display("00:00")
