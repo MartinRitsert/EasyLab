@@ -97,7 +97,7 @@ class EasyLab(QWidget):
 
         # Initialize a SingleShot Timer used for showing the the next action inside upcoming_action_label
         self.action_singleshot_timer = QTimer(self)
-        self.action_singleshot_timer.singleShot(True)
+        self.action_singleshot_timer.setSingleShot(True)
         self.action_singleshot_timer.timeout.connect(self.stop_action)
 
         # Keep track of message boxes
