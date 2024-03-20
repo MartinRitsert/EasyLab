@@ -72,11 +72,12 @@ class ActionCounter(QLCDNumber):
 
         self.animation_group.stateChanged.connect(self.animate)
 
-        # Load the sound file
+        # Load sound files
         current_file_path = os.path.abspath(__file__)
         current_directory = os.path.dirname(current_file_path)
         self.ping_sound = os.path.join(current_directory, "../assets/sounds/ping.wav")
         self.bell_sound = os.path.join(current_directory, "../assets/sounds/bell.wav")
+        self.silence_sound = os.path.join(current_directory, "../assets/sounds/silence.wav")
 
 
     def start(self, time_points):
@@ -102,11 +103,11 @@ class ActionCounter(QLCDNumber):
     def update_counter(self):
         self.remaining_time -= 1  # Decrement the remaining time
 
-        # Prevent displaying of time changing color and playing sound during animation
+        # Prevent displaying of time changing color and playing sound during running animation_group
         if self.animation_group.state() != QPropertyAnimation.Running:
             self.display_time()
 
-            # If required, change counter color
+            # Play sound, and - if required - change counter color
             if self.remaining_time <= 10 and self.remaining_time > 0:
                 QSound.play(self.ping_sound)
                 if self.styleSheet() != self.red_style:
@@ -115,11 +116,13 @@ class ActionCounter(QLCDNumber):
                 QSound.play(self.ping_sound)
                 if self.styleSheet() != self.orange_style:
                     self.setStyleSheet(self.orange_style)
+            elif self.remaining_time in [31, 32]:
+                QSound.play(self.silence_sound)
 
         # Check if the time has reached zero
         if self.remaining_time == 0:
             QSound.play(self.bell_sound)
-            if self.animation_group.state() == QPropertyAnimation.Running:    # If another animation is already running, stop it
+            if self.animation_group.state() == QPropertyAnimation.Running:    # If animation_group is already running, stop it
                 self.animation_group.stop()
             self.animation_group.start()  # Start the animation
             self.time_reached.emit()  # Emit the time_reached signal

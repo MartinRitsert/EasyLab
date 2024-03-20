@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QVBoxLay
     QSizePolicy, QComboBox, QMessageBox, QFrame
 from PyQt5.QtCore import Qt, QTimer, QTime, pyqtSignal
 from PyQt5.QtGui import QGuiApplication, QFont
+from PyQt5.QtMultimedia import QSound
 
 from digital_clock import DigitalClock
 from elapsed_counter import ElapsedCounter
@@ -108,6 +109,12 @@ class EasyLab(QWidget):
         current_directory = os.path.dirname(current_file_path)
         with open(os.path.join(current_directory, "style.qss"), "r") as file:
             self.stylesheet = file.read()
+
+        # Load sound files
+        current_file_path = os.path.abspath(__file__)
+        current_directory = os.path.dirname(current_file_path)
+        self.silence_sound = os.path.join(current_directory, "../assets/sounds/silence.wav")
+        self.cheering_sound = os.path.join(current_directory, "../assets/sounds/cheering.wav")  
 
         # Setup the UI
         self.setup_ui()
@@ -749,6 +756,10 @@ class EasyLab(QWidget):
             border: 1px solid black;
             border-radius: 10px;
         """)
+
+        # Play cheering sound
+        if not self.schedule:
+            QSound.play(self.cheering_sound)
 
         # Display a message
         #? If wished, make the tables writeable now
