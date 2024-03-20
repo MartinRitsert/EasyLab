@@ -95,6 +95,11 @@ class EasyLab(QWidget):
         self.action_timer_remaining = None
         self.action_timer.timeout.connect(self.update_upcoming_action_label)
 
+        # Initialize a SingleShot Timer used for showing the the next action inside upcoming_action_label
+        self.action_singleshot_timer = QTimer(self)
+        self.action_singleshot_timer.singleShot(True)
+        self.action_singleshot_timer.timeout.connect(self.stop_action)
+
         # Keep track of message boxes
         self.message_box = None
 
@@ -731,6 +736,7 @@ class EasyLab(QWidget):
         self.elapsed_counter.stop()
         self.action_counter.stop()
         self.action_timer.stop()
+        self.action_singleshot_timer.stop()
 
         # Clear the upcoming action label
         self.upcoming_action_label.setText("")
@@ -756,7 +762,7 @@ class EasyLab(QWidget):
     def display_upcoming_action(self):
         # When schedule is empty (all actions are done), clear the upcoming action label
         if not self.schedule:
-            self.upcoming_action_label.setText("")
+            self.upcoming_action_label.setText("All done!")
             return
 
         # Pop first action from schedule
@@ -792,7 +798,7 @@ class EasyLab(QWidget):
             self.action_timer_remaining = self.next_action_duration
 
         # Start timer until end of action (+1 s to be not abrupt and not interfere with action_counter)
-        QTimer.singleShot((self.next_action_duration + 1) * 1000, self.stop_action)
+        self.action_singleshot_timer.start((self.next_action_duration + 1) * 1000)
 
     def stop_action(self):
         # Apply the default style
@@ -833,7 +839,7 @@ class EasyLab(QWidget):
             pass
     
     def closeEvent(self, event):
-        reply = QMessageBox.question(self, "Exit", "Are you sure you want to exit the application?", \
+        reply = QMessageBox.question(self, "Exit", "Exiting the application will stop active experiments and will delete all 'time points and clock times' data. Are you sure you want to exit the application?", \
                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             event.accept()

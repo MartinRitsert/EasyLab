@@ -75,7 +75,8 @@ class ActionCounter(QLCDNumber):
         # Load the sound file
         current_file_path = os.path.abspath(__file__)
         current_directory = os.path.dirname(current_file_path)
-        self.sound_file = os.path.join(current_directory, "../assets/sounds/ping.wav")
+        self.ping_sound = os.path.join(current_directory, "../assets/sounds/ping.wav")
+        self.bell_sound = os.path.join(current_directory, "../assets/sounds/bell.wav")
 
 
     def start(self, time_points):
@@ -101,22 +102,23 @@ class ActionCounter(QLCDNumber):
     def update_counter(self):
         self.remaining_time -= 1  # Decrement the remaining time
 
-        # Prevent displaying of time and changing color during animation
+        # Prevent displaying of time changing color and playing sound during animation
         if self.animation_group.state() != QPropertyAnimation.Running:
             self.display_time()
 
             # If required, change counter color
-            if self.remaining_time <= 10:
-                QSound.play(self.sound_file)
+            if self.remaining_time <= 10 and self.remaining_time > 0:
+                QSound.play(self.ping_sound)
                 if self.styleSheet() != self.red_style:
                     self.setStyleSheet(self.red_style)
-            elif self.remaining_time <= 30:
-                QSound.play(self.sound_file)
+            elif self.remaining_time <= 30 and self.remaining_time > 0:
+                QSound.play(self.ping_sound)
                 if self.styleSheet() != self.orange_style:
                     self.setStyleSheet(self.orange_style)
 
         # Check if the time has reached zero
         if self.remaining_time == 0:
+            QSound.play(self.bell_sound)
             if self.animation_group.state() == QPropertyAnimation.Running:    # If another animation is already running, stop it
                 self.animation_group.stop()
             self.animation_group.start()  # Start the animation
