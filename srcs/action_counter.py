@@ -1,5 +1,8 @@
-from PyQt5.QtWidgets import QLCDNumber, QGraphicsOpacityEffect
+import os
+
+from PyQt5.QtWidgets import QLCDNumber, QGraphicsOpacityEffect, QApplication
 from PyQt5.QtCore import QTimer, pyqtSignal, QPropertyAnimation, QSequentialAnimationGroup
+from PyQt5.QtMultimedia import QSound
 
 
 class ActionCounter(QLCDNumber):
@@ -69,6 +72,11 @@ class ActionCounter(QLCDNumber):
 
         self.animation_group.stateChanged.connect(self.animate)
 
+        # Load the sound file
+        current_file_path = os.path.abspath(__file__)
+        current_directory = os.path.dirname(current_file_path)
+        self.sound_file = os.path.join(current_directory, "../assets/sounds/ping.wav")
+
 
     def start(self, time_points):
         self.time_points = time_points
@@ -99,9 +107,11 @@ class ActionCounter(QLCDNumber):
 
             # If required, change counter color
             if self.remaining_time <= 10:
+                QSound.play(self.sound_file)
                 if self.styleSheet() != self.red_style:
                     self.setStyleSheet(self.red_style)
             elif self.remaining_time <= 30:
+                QSound.play(self.sound_file)
                 if self.styleSheet() != self.orange_style:
                     self.setStyleSheet(self.orange_style)
 

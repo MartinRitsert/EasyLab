@@ -1,4 +1,5 @@
 import sys
+import os
 import random
 import string
 
@@ -98,7 +99,9 @@ class EasyLab(QWidget):
         self.message_box = None
 
         # Load standard stylesheet
-        with open("srcs/style.qss", "r") as file:
+        current_file_path = os.path.abspath(__file__)
+        current_directory = os.path.dirname(current_file_path)
+        with open(os.path.join(current_directory, "style.qss"), "r") as file:
             self.stylesheet = file.read()
 
         # Setup the UI
@@ -727,6 +730,7 @@ class EasyLab(QWidget):
         # Stop the timers
         self.elapsed_counter.stop()
         self.action_counter.stop()
+        self.action_timer.stop()
 
         # Clear the upcoming action label
         self.upcoming_action_label.setText("")
@@ -827,6 +831,14 @@ class EasyLab(QWidget):
             pass
         else:
             pass
+    
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, "Exit", "Are you sure you want to exit the application?", \
+                                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
 
 def main():
     # Create the application
@@ -834,6 +846,9 @@ def main():
 
     # Create the main window
     experiment_app = EasyLab()
+
+    # Define what happens when app is exiting
+    app.aboutToQuit.connect(experiment_app.closeEvent)
 
     # Exit the application
     sys.exit(app.exec_())
