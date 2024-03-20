@@ -763,7 +763,7 @@ class EasyLab(QWidget):
 
         # Display a message
         #? If wished, make the tables writeable now
-        QMessageBox.information(self, "Experiment Stopped", "The experiment has been stopped. You can now export the data.")
+        QMessageBox.information(self, "Experiment Stopped", "The experiment has been stopped. Don't forget to export the data if you haven't already done so.")
 
     def synced_start(self, time_points):
         self.clock.restart()    # Sync the clock
