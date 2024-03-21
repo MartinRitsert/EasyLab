@@ -128,8 +128,8 @@ class EasyLab(QWidget):
         screenHeight = screen.height()
 
         # Window size
-        winWidth = int(screenWidth // 1.9)
-        winHeight = int(screenHeight // 1.4)
+        winWidth = int(screenWidth // 2.23)
+        winHeight = int(screenHeight // 1.45)
 
         # Calculate window position
         x = (screenWidth - winWidth) // 2
