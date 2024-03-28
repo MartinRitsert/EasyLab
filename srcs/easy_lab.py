@@ -432,8 +432,7 @@ class EasyLab(QWidget):
             #! Assumption 2.2: Between end of holding and start of next action, there must be at least 2 seconds
         #! Assumption 3: The holding duration must be at least 1 second
         #! Assumption 4: For realistic handling and functioning of this program, the first action must not start before 00:02
-        #? Question1: Are the assumptions okay?
-        #? Question2: Holding duration [0, 60] okay?
+        #! Note: Holding duration [30, 70]
 
         # Ask for confirmation of deleting current times
         if self.t1_col1_line_edits[0].text():
@@ -521,9 +520,8 @@ class EasyLab(QWidget):
             #! Assumption 2.2: Between end of holding and start of next action, there must be at least 2 seconds
         #! Assumption 3: The holding duration must be at least 30 seconds
         #! Assumption 4: For realistic handling and functioning of this program, the first action must not start before 00:02
-        #? Question1: Are the assumptions okay?
-        #? Question2: Holding duration [30, 70] okay?
-        #? Question3: Dumping duration [60, 119] okay?
+        #! Note: Holding duration [30, 70]
+        #! Note: Dumping duration [60, 119]
 
         # Ask for confirmation of deleting current times
         if self.t1_col1_line_edits[0].text():

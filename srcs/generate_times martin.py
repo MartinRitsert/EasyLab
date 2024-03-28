@@ -1,15 +1,12 @@
 import random
 
 #TODO Improvements
-# Output everything nicely in a table in a word- or excel-file
 # Open the file after generation
 # Add a well noticeable sound and voice command 30s before the next action is due
 
 # Create a PyQt program for this! It should be able to:
-# - Automatically export the times to a word file
+# - Export table automatically at start? Or ask if it should be exported? Or at the end?
 # - Export the table to a Word-File (that is exactly the page contained in the study protocol)
-# - Remember 30s before the next action is due (sound && coloring the timer to orange/red)
-# - Outputs a sound and notfication/rocket when the action is due
 
 
 usage_time_points = list()
