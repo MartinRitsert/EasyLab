@@ -432,7 +432,7 @@ class EasyLab(QWidget):
             #! Assumption 2.2: Between end of holding and start of next action, there must be at least 2 seconds
         #! Assumption 3: The holding duration must be at least 1 second
         #! Assumption 4: For realistic handling and functioning of this program, the first action must not start before 00:02
-        #! Note: Holding duration [30, 70]
+        #! Note: Holding duration [1, 60]
 
         # Ask for confirmation of deleting current times
         if self.t1_col1_line_edits[0].text():
@@ -521,7 +521,7 @@ class EasyLab(QWidget):
         #! Assumption 3: The holding duration must be at least 30 seconds
         #! Assumption 4: For realistic handling and functioning of this program, the first action must not start before 00:02
         #! Note: Holding duration [30, 70]
-        #! Note: Dumping duration [60, 119]
+        #! Note: Dumping duration [50, 119]
 
         # Ask for confirmation of deleting current times
         if self.t1_col1_line_edits[0].text():
@@ -541,10 +541,10 @@ class EasyLab(QWidget):
         # Iterate over all six 10-minute intervals
         for i in range(0, 60*60, 10*60):
 
-            # Start randomizing usage time point, hold time point and hold duration
-            dump_time_point = i + random.randint(0, (10*60)-62)    # Assumption 1.1
-            dump_duration = random.randint(60, 119)
-            hold_time_point = i + random.randint(0, (10*60)-3)  # Assumption 1.2 && Assumption 3
+            # Start randomizing dump time point, dump duration, hold time point and hold duration
+            dump_time_point = i + random.randint(0, (10*60)-52)    # Assumption 1.1
+            dump_duration = random.randint(50, 119)
+            hold_time_point = i + random.randint(0, (10*60)-32)  # Assumption 1.2 && Assumption 3
             hold_duration = random.randint(30, 70)
 
             # Initialize approved to false
@@ -554,45 +554,45 @@ class EasyLab(QWidget):
             while not approved:
                 # Assumption 1.1
                 if (dump_time_point + dump_duration + 2) > (i + (10*60)):
-                    dump_time_point = i + random.randint(0, (10*60)-62)
-                    dump_duration = random.randint(60, 119)
-                    hold_time_point = i + random.randint(0, (10*60)-3)
+                    dump_time_point = i + random.randint(0, (10*60)-52)
+                    dump_duration = random.randint(50, 119)
+                    hold_time_point = i + random.randint(0, (10*60)-32)
                     hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 1.2
                 if (hold_time_point + hold_duration + 2) > (i + (10*60)):
-                    dump_time_point = i + random.randint(0, (10*60)-62)
-                    dump_duration = random.randint(60, 119)
-                    hold_time_point = i + random.randint(0, (10*60)-3)
+                    dump_time_point = i + random.randint(0, (10*60)-52)
+                    dump_duration = random.randint(50, 119)
+                    hold_time_point = i + random.randint(0, (10*60)-32)
                     hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 2
                 elif dump_time_point == hold_time_point or dump_time_point == (hold_time_point + hold_duration) \
                     or (dump_time_point + dump_duration) == hold_time_point or (dump_time_point + dump_duration) == (hold_time_point + hold_duration):
-                    dump_time_point = i + random.randint(0, (10*60)-62)
-                    dump_duration = random.randint(60, 119)
-                    hold_time_point = i + random.randint(0, (10*60)-3)
+                    dump_time_point = i + random.randint(0, (10*60)-52)
+                    dump_duration = random.randint(50, 119)
+                    hold_time_point = i + random.randint(0, (10*60)-32)
                     hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 2.1
                 elif dump_time_point < hold_time_point and (dump_time_point + dump_duration + 2) > hold_time_point:
-                    dump_time_point = i + random.randint(0, (10*60)-62)
-                    dump_duration = random.randint(60, 119)
-                    hold_time_point = i + random.randint(0, (10*60)-3)
+                    dump_time_point = i + random.randint(0, (10*60)-52)
+                    dump_duration = random.randint(50, 119)
+                    hold_time_point = i + random.randint(0, (10*60)-32)
                     hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 2.2 && Assumption 3
                 elif hold_time_point < dump_time_point and (hold_time_point + hold_duration + 2) > dump_time_point:
-                    dump_time_point = i + random.randint(0, (10*60)-62)
-                    dump_duration = random.randint(60, 119)
-                    hold_time_point = i + random.randint(0, (10*60)-3)
+                    dump_time_point = i + random.randint(0, (10*60)-52)
+                    dump_duration = random.randint(50, 119)
+                    hold_time_point = i + random.randint(0, (10*60)-32)
                     hold_duration = random.randint(30, 70)
                     continue
                 # Assumption 4
                 elif dump_time_point < 2 or hold_time_point < 2:
-                    dump_time_point = i + random.randint(0, (10*60)-62)
-                    dump_duration = random.randint(60, 119)
-                    hold_time_point = i + random.randint(0, (10*60)-3)
+                    dump_time_point = i + random.randint(0, (10*60)-52)
+                    dump_duration = random.randint(50, 119)
+                    hold_time_point = i + random.randint(0, (10*60)-32)
                     hold_duration = random.randint(30, 70)
                     continue
                 else:
