@@ -113,8 +113,9 @@ class EasyLab(QWidget):
         # Load sound files
         current_file_path = os.path.abspath(__file__)
         current_directory = os.path.dirname(current_file_path)
-        self.silence_sound = os.path.join(current_directory, "../assets/sounds/silence.wav")
-        self.cheering_sound = os.path.join(current_directory, "../assets/sounds/cheering.wav")  
+        # self.silence_sound = os.path.join(current_directory, "../assets/sounds/silence.wav")
+        self.ping_sound = os.path.join(current_directory, "../assets/sounds/ping.wav")
+        self.cheering_sound = os.path.join(current_directory, "../assets/sounds/cheering.wav")
 
         # Setup the UI
         self.setup_ui()
@@ -845,8 +846,14 @@ class EasyLab(QWidget):
     def update_upcoming_action_label(self):
         self.action_timer_remaining -= 1
         if self.next_action == "Hold":
+            # Play sound
+            if self.remaining_time <= 5:
+                QSound.play(self.ping_sound)
             self.upcoming_action_label.setText(f"Hold ({self.action_timer_remaining} s)")
         elif self.next_action == "Dump":
+            # Play sound
+            if self.remaining_time <= 5:
+                QSound.play(self.ping_sound)
             self.upcoming_action_label.setText(f"Dump ({self.action_timer_remaining} s)")
 
         # Stop the timer when it reaches 0
