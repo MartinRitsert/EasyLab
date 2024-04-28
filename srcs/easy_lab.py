@@ -673,7 +673,8 @@ class EasyLab(QWidget):
             self.t2_col2_line_edits[index].setText(self.hold_clock_times[index])
     
     def export_data(self):
-        # Add code to export data to a Word file
+        # Decided not to implement this method as it is not required for the current project
+        # However, it can be implemented here for future projects
         pass
 
     def on_start_stop_button_clicked(self):
