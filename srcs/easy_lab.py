@@ -847,12 +847,12 @@ class EasyLab(QWidget):
         self.action_timer_remaining -= 1
         if self.next_action == "Hold":
             # Play sound
-            if self.remaining_time <= 5:
+            if self.action_timer_remaining <= 5:
                 QSound.play(self.ping_sound)
             self.upcoming_action_label.setText(f"Hold ({self.action_timer_remaining} s)")
         elif self.next_action == "Dump":
             # Play sound
-            if self.remaining_time <= 5:
+            if self.action_timer_remaining <= 5:
                 QSound.play(self.ping_sound)
             self.upcoming_action_label.setText(f"Dump ({self.action_timer_remaining} s)")
 
