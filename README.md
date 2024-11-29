@@ -1,4 +1,4 @@
-# 💻 Desktop Application for Lab Experiments with a Smart Asthma Inhaler
+# 💻 EasyLab: Desktop Application for Lab Randomized Lab Experiments
 
 - **💡 Project Description:** Designed and implemented a Python-based desktop application using PyQt to facilitate randomized experiments in a research setting.
 - **📍 User Base:** Adopted at ETH Zurich’s Centre for Digital Health Interventions to advance smart inhaler research.
