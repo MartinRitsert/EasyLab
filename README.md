@@ -3,3 +3,5 @@
 - **🚀 How to Run**: Execute easy_lab.py located in the srcs folder (e.g., using VSCode)
 - **👨‍💻 Languages:** Python
 - **🛠️ Frameworks / Tools**: PyQt
+- **📸 Samples:**
+<img width="1173" alt="Screenshot 2024-11-29 at 16 52 32" src="https://github.com/user-attachments/assets/160e2ab9-ee3f-425c-acb8-ae4cc000ec5f">
