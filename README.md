@@ -2,7 +2,7 @@
 
 - **💡 Project Description:** Designed and implemented a Python-based desktop application using PyQt to facilitate randomized experiments in a research setting.
 - **📍 User Base:** Adopted at ETH Zurich’s Centre for Digital Health Interventions to advance smart inhaler research.
-- **🚀 How to Run**: Execute `easy_lab.py` located in the srcs folder (e.g., using VSCode)
+- **🚀 How to Run**: Execute `srcs/easy_lab.py`
 - **👨‍💻 Languages:** Python
 - **🛠️ Frameworks / Tools**: PyQt
 - **📸 Samples:**
