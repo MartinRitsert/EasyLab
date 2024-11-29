@@ -1,7 +1,7 @@
 # EasyLab: Desktop Application for Randomized Lab Experiments
 
-- **💡 Project Description:** Designed and implemented a Python-based desktop application using PyQt to facilitate randomized experiments in a research setting.
-- **📍 User Base:** Adopted at ETH Zurich’s Centre for Digital Health Interventions to advance smart inhaler research.
+- **💡 Project Description:** Designed and implemented a Python-based desktop application using PyQt to facilitate randomized experiments in a research setting
+- **📍 User Base:** Researchers at the Centre for Digital Health Interventions at ETH Zurich
 - **🚀 How to Run:** Execute `srcs/easy_lab.py`
 - **💻 Languages:** Python
 - **🛠️ Frameworks / Tools:** PyQt
