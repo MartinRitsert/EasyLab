@@ -1,0 +1,2 @@
+- Desktop application to create and conduct randomized lab experiments with a smart asthma inhaler
+- Is used in the research lab of the Centre for Digital Health Interventions at ETH Zurich
